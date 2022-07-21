@@ -68,8 +68,8 @@ int main(int argc,char **argv)
   /* Initialize mesh */
   PetscCall(DMCreate(PETSC_COMM_WORLD, &dm));
   PetscCall(DMSetType(dm, DMPLEX));
+  //PetscCall(DMPlexCreateWedgeBoxMesh(PETSC_COMM_WORLD,NULL,NULL,NULL,NULL,PETSC_TRUE,PETSC_TRUE,&dm)); // this creates a tensor wedge at the moment
   PetscCall(DMSetFromOptions(dm));
-  //PetscCall(DMPlexCreateWedgeBoxMesh(PETSC_COMM_WORLD,NULL,NULL,NULL,NULL,PETSC_TRUE,PETSC_TRUE,&dm));
   PetscCall(DMViewFromOptions(dm, NULL, "-dm_view"));
 
   /* */
