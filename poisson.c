@@ -24,6 +24,9 @@ static void f0(PetscInt dim, PetscInt Nf, PetscInt NfAux,
                const PetscInt aOff[], const PetscInt aOff_x[], const PetscScalar a[], const PetscScalar a_t[], const PetscScalar a_x[],
                PetscReal t, const PetscReal x[], PetscInt numConstants, const PetscScalar constants[], PetscScalar f0[])
 {
+  //printf("\n\ndim = %d, Nf = %d, NfAux = %d\n",dim,Nf,NfAux);
+  //printf("x = {%g, %g, %g}\n",x[0],x[1],x[2]);
+  //printf("u = %g, grad(u) = {%g, %g, %g}\n",u[0],u_x[0],u_x[1],u_x[2]);
   f0[0] = -body_force(t,x);
 }
 
@@ -68,10 +71,15 @@ int main(int argc,char **argv)
   /* Initialize mesh */
   PetscCall(DMCreate(PETSC_COMM_WORLD, &dm));
   PetscCall(DMSetType(dm, DMPLEX));
-  //PetscCall(DMPlexCreateWedgeBoxMesh(PETSC_COMM_WORLD,NULL,NULL,NULL,NULL,PETSC_TRUE,PETSC_TRUE,&dm)); // this creates a tensor wedge at the moment
   PetscCall(DMSetFromOptions(dm));
   PetscCall(DMViewFromOptions(dm, NULL, "-dm_view"));
 
+  /* */
+  PetscCall(DMCreateLabel(dm,"marker"));
+  PetscCall(DMGetLabel(dm,"marker",&label));
+  PetscCall(DMPlexMarkBoundaryFaces(dm,1,label));
+  PetscCall(DMPlexLabelComplete(dm,label));
+  
   /* */
   PetscCall(DMCreateFEDefault(dm, 1, NULL, PETSC_DETERMINE, &fe));
   PetscCall(DMSetField(dm, 0, NULL, (PetscObject) fe));
@@ -81,7 +89,6 @@ int main(int argc,char **argv)
   PetscCall(PetscDSSetJacobian(ds, 0, 0, NULL, NULL, NULL, g3));
 
   /* Setup boundary conditions */
-  PetscCall(DMGetLabel(dm, "marker", &label));
   PetscCall(DMAddBoundary(dm, DM_BC_ESSENTIAL, "all", label, 1, &id, 0, 0, NULL, (void (*)(void)) dirichlet_bc, NULL, NULL, NULL));
   
   /* Prepare the solution vector */
@@ -97,7 +104,6 @@ int main(int argc,char **argv)
   PetscCall(SNESSetFromOptions(snes));
   PetscCall(DMSNESCheckFromOptions(snes, u));
   PetscCall(SNESSolve(snes, NULL, u));
-  VecView(u,PETSC_VIEWER_STDOUT_WORLD);
   
   /* Cleanup */
   PetscCall(PetscFEDestroy(&fe));
